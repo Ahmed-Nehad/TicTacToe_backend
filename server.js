@@ -26,7 +26,7 @@ const createRoom = (p, mode) => {
     rooms.push({ id, mode, p1: p });
     return id;
 };
-const freeRooms = (mode) => rooms.filter(room => !room.p2 && room.mode === mode);
+const freeRooms = (mode) => rooms.filter(room => !room.p2 && mode === room.mode);
 const getRoomIndexByRoomId = (id) => {
     for (let i = 0; i < rooms.length; i++)
         if (rooms[i].id == id)
@@ -55,15 +55,15 @@ const join = (p, mode, socket) => {
         // console.log(p.name, "joined room", id); // <======
     }
     else {
-        const id = createRoom(p);
+        const id = createRoom(p, mode);
         socket.join(id);
         // console.log(p.name, "opened room", id); // <======
     }
 };
 io.on("connection", socket => {
     // console.log(socket.id, "Connected"); 
-    socket.on("join", ({name, mode}) => {
-        join({ name, mode, id: socket.id }, socket);
+    socket.on("join", ({ name, mode }) => {
+        join({ name, id: socket.id }, mode, socket);
         // console.log(freeRooms, rooms, 0); // <======
     });
     socket.on("move", ({ pos, id }) => {
@@ -76,7 +76,7 @@ io.on("connection", socket => {
             const userRoom = rooms[index];
             const user = userRoom.p1.id == socket.id ? userRoom.p2 : userRoom.p1;
             if (userRoom.p2) {
-                const freerooms = freeRooms(userRoom.mood);
+                const freerooms = freeRooms(userRoom.mode);
                 if (freerooms.length > 0) {
                     const { id, p1 } = freerooms[0];
                     io.in(userRoom.id).socketsJoin(id);
