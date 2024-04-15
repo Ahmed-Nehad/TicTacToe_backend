@@ -21,12 +21,12 @@ const io = new socket_io_1.Server(httpServer, { cors: { origin: "*" } });
 ;
 let rooms = [];
 const makeId = () => Math.random().toString();
-const createRoom = (p) => {
+const createRoom = (p, mode) => {
     const id = makeId();
-    rooms.push({ id, p1: p });
+    rooms.push({ id, mode, p1: p });
     return id;
 };
-const freeRooms = () => rooms.filter(room => !room.p2);
+const freeRooms = (mode) => rooms.filter(room => !room.p2 && room.mode === mode);
 const getRoomIndexByRoomId = (id) => {
     for (let i = 0; i < rooms.length; i++)
         if (rooms[i].id == id)
@@ -45,8 +45,8 @@ const updateRoom = (id, data) => {
 const deleteRoom = (id) => {
     rooms = rooms.filter(room => room.id != id);
 };
-const join = (p, socket) => {
-    const freerooms = freeRooms();
+const join = (p, mode, socket) => {
+    const freerooms = freeRooms(mode);
     if (freerooms.length > 0) {
         const { id, p1 } = freerooms[0];
         socket.join(id);
@@ -62,8 +62,8 @@ const join = (p, socket) => {
 };
 io.on("connection", socket => {
     // console.log(socket.id, "Connected"); 
-    socket.on("join", name => {
-        join({ name, id: socket.id }, socket);
+    socket.on("join", ({name, mode}) => {
+        join({ name, mode, id: socket.id }, socket);
         // console.log(freeRooms, rooms, 0); // <======
     });
     socket.on("move", ({ pos, id }) => {
@@ -76,7 +76,7 @@ io.on("connection", socket => {
             const userRoom = rooms[index];
             const user = userRoom.p1.id == socket.id ? userRoom.p2 : userRoom.p1;
             if (userRoom.p2) {
-                const freerooms = freeRooms();
+                const freerooms = freeRooms(userRoom.mood);
                 if (freerooms.length > 0) {
                     const { id, p1 } = freerooms[0];
                     io.in(userRoom.id).socketsJoin(id);
