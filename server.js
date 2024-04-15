@@ -62,7 +62,16 @@ const join = (p, mode, socket) => {
 };
 io.on("connection", socket => {
     // console.log(socket.id, "Connected"); 
-    socket.on("join", ({ name, mode }) => {
+    socket.on("join", (data) => {
+        let name, mode;
+        if (data.name) {
+            name = data.name;
+            mode = data.mode;
+        }
+        else {
+            name = data;
+            mode = '';
+        }
         join({ name, id: socket.id }, mode, socket);
         // console.log(freeRooms, rooms, 0); // <======
     });
